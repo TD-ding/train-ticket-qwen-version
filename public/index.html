@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>火车票订购系统</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部导航栏 -->
+    <nav id="navbar" class="navbar">
+      <div class="navbar-brand">🚄 火车票订购系统</div>
+      <div class="navbar-links" id="nav-links"></div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <main id="main-content">
+      <!-- 搜索页面（默认） -->
+      <section id="page-search" class="page active">
+        <div class="search-hero">
+          <h1>查找您的火车票</h1>
+          <form id="search-form" class="search-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>出发站</label>
+                <select id="search-from" required>
+                  <option value="">请选择出发站</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>到达站</label>
+                <select id="search-to" required>
+                  <option value="">请选择到达站</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>出发日期</label>
+                <input type="date" id="search-date" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-search">查询车票</button>
+            </div>
+          </form>
+        </div>
+        <div id="search-results" class="search-results"></div>
+      </section>
+
+      <!-- 登录页面 -->
+      <section id="page-login" class="page">
+        <div class="auth-container">
+          <h2>用户登录</h2>
+          <form id="login-form" class="auth-form">
+            <div class="form-group">
+              <label>用户名</label>
+              <input type="text" id="login-username" required placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+              <label>密码</label>
+              <input type="password" id="login-password" required placeholder="请输入密码">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">登录</button>
+          </form>
+          <p class="auth-switch">还没有账号？<a href="#" id="show-register">立即注册</a></p>
+        </div>
+      </section>
+
+      <!-- 注册页面 -->
+      <section id="page-register" class="page">
+        <div class="auth-container">
+          <h2>用户注册</h2>
+          <form id="register-form" class="auth-form">
+            <div class="form-group">
+              <label>用户名</label>
+              <input type="text" id="reg-username" required placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+              <label>密码</label>
+              <input type="password" id="reg-password" required placeholder="请输入密码">
+            </div>
+            <div class="form-group">
+              <label>真实姓名</label>
+              <input type="text" id="reg-realname" placeholder="请输入真实姓名">
+            </div>
+            <div class="form-group">
+              <label>手机号</label>
+              <input type="tel" id="reg-phone" placeholder="请输入手机号">
+            </div>
+            <div class="form-group">
+              <label>邮箱</label>
+              <input type="email" id="reg-email" placeholder="请输入邮箱">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">注册</button>
+          </form>
+          <p class="auth-switch">已有账号？<a href="#" id="show-login">立即登录</a></p>
+        </div>
+      </section>
+
+      <!-- 我的订单页面 -->
+      <section id="page-orders" class="page">
+        <div class="page-container">
+          <h2>我的订单</h2>
+          <div id="orders-list" class="orders-list"></div>
+        </div>
+      </section>
+
+      <!-- 管理员面板 -->
+      <section id="page-admin" class="page">
+        <div class="page-container">
+          <h2>管理员面板</h2>
+          <div class="admin-tabs">
+            <button class="tab-btn active" data-tab="dashboard">数据概览</button>
+            <button class="tab-btn" data-tab="trains">列车管理</button>
+            <button class="tab-btn" data-tab="all-orders">所有订单</button>
+            <button class="tab-btn" data-tab="users">用户管理</button>
+          </div>
+
+          <!-- 数据概览 -->
+          <div id="admin-dashboard" class="admin-tab-content active">
+            <div class="stats-grid" id="stats-grid"></div>
+          </div>
+
+          <!-- 列车管理 -->
+          <div id="admin-trains" class="admin-tab-content">
+            <button class="btn btn-primary" id="btn-add-train">添加列车</button>
+            <div id="admin-trains-table"></div>
+          </div>
+
+          <!-- 所有订单 -->
+          <div id="admin-all-orders" class="admin-tab-content">
+            <div id="admin-orders-table"></div>
+          </div>
+
+          <!-- 用户管理 -->
+          <div id="admin-users" class="admin-tab-content">
+            <div id="admin-users-table"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 购票弹窗 -->
+    <div id="booking-modal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <h3>购票信息</h3>
+        <form id="booking-form">
+          <div class="form-group">
+            <label>车次: <span id="booking-train-no"></span></label>
+          </div>
+          <div class="form-group">
+            <label>座位类型</label>
+            <select id="booking-seat-type" required>
+              <option value="hard_seat">硬座</option>
+              <option value="hard_sleeper">硬卧</option>
+              <option value="soft_sleeper">软卧</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>乘客姓名</label>
+            <input type="text" id="booking-passenger" required placeholder="请输入乘客姓名">
+          </div>
+          <div class="form-group">
+            <label>身份证号</label>
+            <input type="text" id="booking-id-number" placeholder="请输入身份证号">
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-booking">取消</button>
+            <button type="submit" class="btn btn-primary">确认购票</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 添加列车弹窗 -->
+    <div id="train-modal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <h3>添加列车</h3>
+        <form id="train-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>车次</label>
+              <input type="text" id="train-no" required placeholder="如 G1001">
+            </div>
+            <div class="form-group">
+              <label>日期</label>
+              <input type="date" id="train-date" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>出发站</label>
+              <input type="text" id="train-from" required placeholder="如 北京">
+            </div>
+            <div class="form-group">
+              <label>到达站</label>
+              <input type="text" id="train-to" required placeholder="如 上海">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>出发时间</label>
+              <input type="time" id="train-departure-time" required>
+            </div>
+            <div class="form-group">
+              <label>到达时间</label>
+              <input type="time" id="train-arrival-time" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>硬座价格</label>
+              <input type="number" id="train-price-seat" step="0.01" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>硬卧价格</label>
+              <input type="number" id="train-price-sleeper" step="0.01" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label>软卧价格</label>
+              <input type="number" id="train-price-soft" step="0.01" placeholder="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>总座位数</label>
+            <input type="number" id="train-seats" placeholder="100">
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-train">取消</button>
+            <button type="submit" class="btn btn-primary">添加</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/orders.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
