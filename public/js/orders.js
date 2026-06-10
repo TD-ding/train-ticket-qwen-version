@@ -95,25 +95,46 @@ const Orders = {
       return;
     }
 
-    container.innerHTML = orders.map(order => `
-      <div class="order-card">
-        <div class="order-info">
-          <div class="order-no">订单号: ${order.order_no}</div>
-          <div class="order-route">${order.departure_station} → ${order.arrival_station} (${order.train_no})</div>
-          <div class="order-details">
-            ${order.date} ${order.departure_time} | ${this.seatTypeLabels[order.seat_type]} | 乘客: ${order.passenger_name}
-            | <span class="status-badge status-${order.status}">${this.statusLabels[order.status]}</span>
+    container.innerHTML = orders.map(order => {
+      // 转义用户输入以防止 XSS
+      const escapeHtml = (str) => {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      };
+
+      const orderNo = escapeHtml(order.order_no);
+      const departureStation = escapeHtml(order.departure_station);
+      const arrivalStation = escapeHtml(order.arrival_station);
+      const trainNo = escapeHtml(order.train_no);
+      const passengerName = escapeHtml(order.passenger_name);
+      const date = escapeHtml(order.date);
+      const departureTime = escapeHtml(order.departure_time);
+      const seatType = this.seatTypeLabels[order.seat_type] || order.seat_type || '-';
+      const status = this.statusLabels[order.status] || order.status;
+      const price = order.price || 0;
+
+      return `
+        <div class="order-card">
+          <div class="order-info">
+            <div class="order-no">订单号: ${orderNo}</div>
+            <div class="order-route">${departureStation} → ${arrivalStation} (${trainNo})</div>
+            <div class="order-details">
+              ${date} ${departureTime} | ${seatType} | 乘客: ${passengerName}
+              | <span class="status-badge status-${order.status}">${status}</span>
+            </div>
+          </div>
+          <div class="order-actions">
+            <span class="order-price">¥${price}</span>
+            ${order.status === 'pending' ? `
+              <button class="btn btn-success" onclick="Orders.payOrder(${order.id})">支付</button>
+              <button class="btn btn-danger" onclick="Orders.cancelOrder(${order.id})">取消</button>
+            ` : ''}
           </div>
         </div>
-        <div class="order-actions">
-          <span class="order-price">¥${order.price}</span>
-          ${order.status === 'pending' ? `
-            <button class="btn btn-success" onclick="Orders.payOrder(${order.id})">支付</button>
-            <button class="btn btn-danger" onclick="Orders.cancelOrder(${order.id})">取消</button>
-          ` : ''}
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   },
 
   /**

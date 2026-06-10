@@ -32,11 +32,12 @@ const Admin = {
       App.showLoading('加载统计数据...');
       const stats = await API.admin.getStats();
       App.hideLoading();
+      const revenue = stats.totalRevenue || 0;
       document.getElementById('stats-grid').innerHTML = `
-        <div class="stat-card"><div class="value">${stats.totalUsers}</div><div class="label">注册用户</div></div>
-        <div class="stat-card"><div class="value">${stats.totalOrders}</div><div class="label">总订单数</div></div>
-        <div class="stat-card"><div class="value">¥${stats.totalRevenue.toFixed(2)}</div><div class="label">总收入</div></div>
-        <div class="stat-card"><div class="value">${stats.totalTrains}</div><div class="label">列车数量</div></div>
+        <div class="stat-card"><div class="value">${stats.totalUsers || 0}</div><div class="label">注册用户</div></div>
+        <div class="stat-card"><div class="value">${stats.totalOrders || 0}</div><div class="label">总订单数</div></div>
+        <div class="stat-card"><div class="value">¥${revenue.toFixed(2)}</div><div class="label">总收入</div></div>
+        <div class="stat-card"><div class="value">${stats.totalTrains || 0}</div><div class="label">列车数量</div></div>
       `;
     } catch (e) {
       App.hideLoading();
@@ -75,7 +76,7 @@ const Admin = {
                 <td>${t.departure_time}</td><td>${t.arrival_time}</td>
                 <td>¥${t.price_hard_seat}</td><td>¥${t.price_hard_sleeper}</td><td>¥${t.price_soft_sleeper}</td>
                 <td>${t.available_seats}/${t.total_seats}</td>
-                <td><span class="status-badge ${t.status === 'active' ? 'status-paid' : 'status-cancelled'}">${this.trainStatusLabels[t.status]}</span></td>
+                <td><span class="status-badge ${t.status === 'active' ? 'status-paid' : (t.status === 'completed' ? 'status-pending' : 'status-cancelled')}">${this.trainStatusLabels[t.status] || t.status}</span></td>
                 <td>
                   ${t.status === 'active'
                     ? `<button class="btn btn-danger" onclick="Admin.cancelTrain(${t.id})">取消</button>`
@@ -152,15 +153,15 @@ const Admin = {
           <tbody>
             ${pageOrders.map(o => `
               <tr>
-                <td>${o.order_no}</td>
-                <td>${o.username}</td>
-                <td>${o.train_no}</td>
-                <td>${o.departure_station} → ${o.arrival_station}</td>
-                <td>${o.passenger_name}</td>
-                <td>${this.seatTypeLabels[o.seat_type]}</td>
-                <td>¥${o.price}</td>
-                <td><span class="status-badge status-${o.status}">${this.statusLabels[o.status]}</span></td>
-                <td>${o.created_at}</td>
+                <td>${o.order_no || '-'}</td>
+                <td>${o.username || '-'}</td>
+                <td>${o.train_no || '-'}</td>
+                <td>${o.departure_station || '-'} → ${o.arrival_station || '-'}</td>
+                <td>${o.passenger_name || '-'}</td>
+                <td>${this.seatTypeLabels[o.seat_type] || o.seat_type || '-'}</td>
+                <td>¥${o.price || 0}</td>
+                <td><span class="status-badge status-${o.status}">${this.statusLabels[o.status] || o.status}</span></td>
+                <td>${o.created_at || '-'}</td>
               </tr>
             `).join('')}
           </tbody>
