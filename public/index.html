@@ -20,6 +20,13 @@
       <section id="page-search" class="page active">
         <div class="search-hero">
           <h1>查找您的火车票</h1>
+          <div class="hot-routes">
+            <span class="hot-routes-label">热门路线：</span>
+            <button type="button" class="hot-route-btn" onclick="Search.quickSearch('北京','上海','2026-06-10')">北京→上海</button>
+            <button type="button" class="hot-route-btn" onclick="Search.quickSearch('北京','广州','2026-06-10')">北京→广州</button>
+            <button type="button" class="hot-route-btn" onclick="Search.quickSearch('北京','深圳','2026-06-11')">北京→深圳</button>
+            <button type="button" class="hot-route-btn" onclick="Search.quickSearch('上海','杭州','2026-06-10')">上海→杭州</button>
+          </div>
           <form id="search-form" class="search-form">
             <div class="form-row">
               <div class="form-group">
@@ -71,15 +78,18 @@
           <form id="register-form" class="auth-form">
             <div class="form-group">
               <label>用户名</label>
-              <input type="text" id="reg-username" required placeholder="请输入用户名">
+              <input type="text" id="reg-username" required placeholder="请输入用户名" onblur="App.validateUsername()">
+              <div class="error-message" id="reg-username-error"></div>
             </div>
             <div class="form-group">
               <label>密码</label>
-              <input type="password" id="reg-password" required placeholder="请输入密码">
+              <input type="password" id="reg-password" required placeholder="请输入密码" onblur="App.validatePassword()">
+              <div class="error-message" id="reg-password-error"></div>
             </div>
             <div class="form-group">
               <label>确认密码</label>
-              <input type="password" id="reg-password-confirm" required placeholder="请再次输入密码">
+              <input type="password" id="reg-password-confirm" required placeholder="请再次输入密码" onblur="App.validatePasswordConfirm()">
+              <div class="error-message" id="reg-password-confirm-error"></div>
             </div>
             <div class="form-group">
               <label>真实姓名</label>
@@ -87,11 +97,13 @@
             </div>
             <div class="form-group">
               <label>手机号</label>
-              <input type="tel" id="reg-phone" placeholder="请输入手机号">
+              <input type="tel" id="reg-phone" placeholder="请输入手机号" onblur="App.validatePhone()">
+              <div class="error-message" id="reg-phone-error"></div>
             </div>
             <div class="form-group">
               <label>邮箱</label>
-              <input type="email" id="reg-email" placeholder="请输入邮箱">
+              <input type="email" id="reg-email" placeholder="请输入邮箱" onblur="App.validateEmail()">
+              <div class="error-message" id="reg-email-error"></div>
             </div>
             <button type="submit" class="btn btn-primary btn-block">注册</button>
           </form>
@@ -103,6 +115,15 @@
       <section id="page-orders" class="page">
         <div class="page-container">
           <h2>我的订单</h2>
+          <div class="order-filters">
+            <label>状态筛选：</label>
+            <select id="order-status-filter" onchange="Orders.filterOrders()">
+              <option value="all">全部</option>
+              <option value="pending">待支付</option>
+              <option value="paid">已支付</option>
+              <option value="cancelled">已取消</option>
+            </select>
+          </div>
           <div id="orders-list" class="orders-list"></div>
         </div>
       </section>
@@ -126,11 +147,13 @@
           <!-- 列车管理 -->
           <div id="admin-trains" class="admin-tab-content">
             <button class="btn btn-primary" id="btn-add-train">添加列车</button>
+            <button class="btn btn-success" onclick="Admin.exportTrains()">导出报表</button>
             <div id="admin-trains-table"></div>
           </div>
 
           <!-- 所有订单 -->
           <div id="admin-all-orders" class="admin-tab-content">
+            <button class="btn btn-success" onclick="Admin.exportOrders()">导出报表</button>
             <div id="admin-orders-table"></div>
           </div>
 
@@ -162,10 +185,12 @@
           <div class="form-group">
             <label>乘客姓名</label>
             <input type="text" id="booking-passenger" required placeholder="请输入乘客姓名">
+            <div class="error-message" id="booking-passenger-error"></div>
           </div>
           <div class="form-group">
             <label>身份证号</label>
-            <input type="text" id="booking-id-number" placeholder="请输入身份证号">
+            <input type="text" id="booking-id-number" placeholder="请输入身份证号" onblur="App.validateIdCard()">
+            <div class="error-message" id="booking-id-number-error"></div>
           </div>
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" id="btn-cancel-booking">取消</button>

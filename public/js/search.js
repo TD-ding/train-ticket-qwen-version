@@ -55,6 +55,16 @@ const Search = {
   },
 
   /**
+   * 快速搜索（热门路线）
+   */
+  quickSearch(from, to, date) {
+    document.getElementById('search-from').value = from;
+    document.getElementById('search-to').value = to;
+    document.getElementById('search-date').value = date;
+    this.search(from, to, date);
+  },
+
+  /**
    * 渲染搜索结果
    */
   renderResults(trains, date) {

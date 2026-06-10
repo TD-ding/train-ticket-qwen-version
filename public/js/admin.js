@@ -217,6 +217,88 @@ const Admin = {
     }
   },
 
+  /**
+   * 导出列车数据为 CSV
+   */
+  async exportTrains() {
+    try {
+      const trains = await API.admin.getTrains();
+      const csv = this.generateCSV(trains, [
+        { key: 'train_no', label: '车次' },
+        { key: 'date', label: '日期' },
+        { key: 'departure_station', label: '出发站' },
+        { key: 'arrival_station', label: '到达站' },
+        { key: 'departure_time', label: '出发时间' },
+        { key: 'arrival_time', label: '到达时间' },
+        { key: 'price_hard_seat', label: '硬座价格' },
+        { key: 'price_hard_sleeper', label: '硬卧价格' },
+        { key: 'price_soft_sleeper', label: '软卧价格' },
+        { key: 'available_seats', label: '余票' },
+        { key: 'total_seats', label: '总座位' },
+        { key: 'status', label: '状态' }
+      ]);
+      this.downloadCSV(csv, 'trains.csv');
+      App.showToast('导出成功', 'success');
+    } catch (e) {
+      App.showToast('导出失败: ' + e.message, 'error');
+    }
+  },
+
+  /**
+   * 导出订单数据为 CSV
+   */
+  async exportOrders() {
+    try {
+      const orders = await API.admin.getOrders();
+      const csv = this.generateCSV(orders, [
+        { key: 'order_no', label: '订单号' },
+        { key: 'username', label: '用户名' },
+        { key: 'train_no', label: '车次' },
+        { key: 'departure_station', label: '出发站' },
+        { key: 'arrival_station', label: '到达站' },
+        { key: 'date', label: '日期' },
+        { key: 'passenger_name', label: '乘客' },
+        { key: 'seat_type', label: '座位类型' },
+        { key: 'price', label: '价格' },
+        { key: 'status', label: '状态' },
+        { key: 'created_at', label: '创建时间' }
+      ]);
+      this.downloadCSV(csv, 'orders.csv');
+      App.showToast('导出成功', 'success');
+    } catch (e) {
+      App.showToast('导出失败: ' + e.message, 'error');
+    }
+  },
+
+  /**
+   * 生成 CSV 字符串
+   */
+  generateCSV(data, columns) {
+    const headers = columns.map(col => col.label).join(',');
+    const rows = data.map(item => {
+      return columns.map(col => {
+        const value = item[col.key] || '';
+        return `"${String(value).replace(/"/g, '""')}"`;
+      }).join(',');
+    });
+    return [headers, ...rows].join('\n');
+  },
+
+  /**
+   * 下载 CSV 文件
+   */
+  downloadCSV(csv, filename) {
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  },
+
   renderPagination(currentPage, totalPages, loadFunc) {
     if (totalPages <= 1) return '';
     let html = '<div style="margin-top: 16px; display: flex; gap: 8px; justify-content: center;">';

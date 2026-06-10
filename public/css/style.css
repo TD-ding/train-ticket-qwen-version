@@ -97,6 +97,73 @@ body {
   margin-bottom: 24px;
 }
 
+/* 热门路线 */
+.hot-routes {
+  text-align: center;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.hot-routes-label {
+  color: rgba(255,255,255,0.8);
+  font-size: 14px;
+}
+
+.hot-route-btn {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.hot-route-btn:hover {
+  background: rgba(255,255,255,0.3);
+  transform: translateY(-1px);
+}
+
+/* 订单筛选 */
+.order-filters {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-filters select {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+/* 表单验证错误提示 */
+.form-group .error-message {
+  color: var(--danger);
+  font-size: 12px;
+  margin-top: 4px;
+  display: none;
+}
+
+.form-group .error-message.show {
+  display: block;
+}
+
+.form-group.has-error input,
+.form-group.has-error select {
+  border-color: var(--danger);
+}
+
 .search-hero h1 {
   text-align: center;
   margin-bottom: 24px;
@@ -584,6 +651,45 @@ body {
 
 /* 响应式 */
 @media (max-width: 768px) {
+  .navbar {
+    padding: 0 12px;
+  }
+
+  .navbar-brand {
+    font-size: 15px;
+  }
+
+  .navbar-links {
+    gap: 4px;
+    font-size: 13px;
+  }
+
+  .navbar-links a, .navbar-links button {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .page {
+    padding: 12px;
+  }
+
+  .search-hero {
+    padding: 20px;
+  }
+
+  .search-hero h1 {
+    font-size: 20px;
+  }
+
+  .hot-routes {
+    gap: 6px;
+  }
+
+  .hot-route-btn {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
   .form-row {
     flex-direction: column;
   }
@@ -612,5 +718,36 @@ body {
   .order-actions {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .admin-tabs {
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .data-table {
+    font-size: 12px;
+  }
+
+  .data-table th, .data-table td {
+    padding: 8px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-card .value {
+    font-size: 24px;
+  }
+
+  .modal-content {
+    padding: 16px;
+    width: 95%;
   }
 }

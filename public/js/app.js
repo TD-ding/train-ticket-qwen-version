@@ -53,14 +53,17 @@ const App = {
       e.preventDefault();
       const password = document.getElementById('reg-password').value;
       const passwordConfirm = document.getElementById('reg-password-confirm').value;
-      if (password !== passwordConfirm) {
-        this.showToast('两次输入的密码不一致', 'error');
+
+      // 验证所有字段
+      const isValid = this.validateUsername() && this.validatePassword() &&
+                      this.validatePasswordConfirm() && this.validatePhone() &&
+                      this.validateEmail();
+
+      if (!isValid) {
+        this.showToast('请修正表单中的错误', 'error');
         return;
       }
-      if (password.length < 6) {
-        this.showToast('密码长度至少6位', 'error');
-        return;
-      }
+
       try {
         App.showLoading('注册中...');
         await Auth.register({
@@ -82,6 +85,19 @@ const App = {
     // 购票表单
     document.getElementById('booking-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      const passenger = document.getElementById('booking-passenger').value.trim();
+      if (!passenger) {
+        this.showFieldError('booking-passenger', '请填写乘客姓名');
+        this.showToast('请填写乘客信息', 'error');
+        return;
+      }
+
+      if (!this.validateIdCard()) {
+        this.showToast('请填写正确的身份证号', 'error');
+        return;
+      }
+
       try {
         App.showLoading('购票中...');
         await API.orders.create({
@@ -285,6 +301,115 @@ const App = {
   hideLoading() {
     const toast = document.getElementById('toast');
     toast.classList.add('hidden');
+  },
+
+  /**
+   * 显示字段错误
+   */
+  showFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.getElementById(fieldId + '-error');
+    if (field && errorDiv) {
+      field.parentElement.classList.add('has-error');
+      errorDiv.textContent = message;
+      errorDiv.classList.add('show');
+    }
+  },
+
+  /**
+   * 清除字段错误
+   */
+  clearFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const errorDiv = document.getElementById(fieldId + '-error');
+    if (field && errorDiv) {
+      field.parentElement.classList.remove('has-error');
+      errorDiv.textContent = '';
+      errorDiv.classList.remove('show');
+    }
+  },
+
+  /**
+   * 验证用户名
+   */
+  validateUsername() {
+    const username = document.getElementById('reg-username').value.trim();
+    this.clearFieldError('reg-username');
+    if (username.length < 3) {
+      this.showFieldError('reg-username', '用户名至少3个字符');
+      return false;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      this.showFieldError('reg-username', '用户名只能包含字母、数字和下划线');
+      return false;
+    }
+    return true;
+  },
+
+  /**
+   * 验证密码
+   */
+  validatePassword() {
+    const password = document.getElementById('reg-password').value;
+    this.clearFieldError('reg-password');
+    if (password.length < 6) {
+      this.showFieldError('reg-password', '密码至少6个字符');
+      return false;
+    }
+    return true;
+  },
+
+  /**
+   * 验证确认密码
+   */
+  validatePasswordConfirm() {
+    const password = document.getElementById('reg-password').value;
+    const passwordConfirm = document.getElementById('reg-password-confirm').value;
+    this.clearFieldError('reg-password-confirm');
+    if (password !== passwordConfirm) {
+      this.showFieldError('reg-password-confirm', '两次输入的密码不一致');
+      return false;
+    }
+    return true;
+  },
+
+  /**
+   * 验证手机号
+   */
+  validatePhone() {
+    const phone = document.getElementById('reg-phone').value.trim();
+    this.clearFieldError('reg-phone');
+    if (phone && !/^1[3-9]\d{9}$/.test(phone)) {
+      this.showFieldError('reg-phone', '请输入正确的手机号');
+      return false;
+    }
+    return true;
+  },
+
+  /**
+   * 验证邮箱
+   */
+  validateEmail() {
+    const email = document.getElementById('reg-email').value.trim();
+    this.clearFieldError('reg-email');
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.showFieldError('reg-email', '请输入正确的邮箱地址');
+      return false;
+    }
+    return true;
+  },
+
+  /**
+   * 验证身份证号
+   */
+  validateIdCard() {
+    const idCard = document.getElementById('booking-id-number').value.trim();
+    this.clearFieldError('booking-id-number');
+    if (!/(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/.test(idCard)) {
+      this.showFieldError('booking-id-number', '请输入正确的身份证号');
+      return false;
+    }
+    return true;
   }
 };
 

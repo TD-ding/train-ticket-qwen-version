@@ -3,6 +3,7 @@
  * 处理用户订单的显示、支付、取消
  */
 const Orders = {
+  allOrders: [],
   seatTypeLabels: {
     hard_seat: '硬座',
     hard_sleeper: '硬卧',
@@ -23,11 +24,25 @@ const Orders = {
     try {
       App.showLoading('加载订单中...');
       const orders = await API.orders.list();
+      this.allOrders = orders;
       App.hideLoading();
       this.renderOrders(orders);
     } catch (e) {
       App.hideLoading();
       App.showToast(e.message, 'error');
+    }
+  },
+
+  /**
+   * 筛选订单
+   */
+  filterOrders() {
+    const status = document.getElementById('order-status-filter').value;
+    if (status === 'all') {
+      this.renderOrders(this.allOrders);
+    } else {
+      const filtered = this.allOrders.filter(order => order.status === status);
+      this.renderOrders(filtered);
     }
   },
 
