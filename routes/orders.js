@@ -83,6 +83,24 @@ router.get('/', authenticateToken, (req, res) => {
 });
 
 /**
+ * 获取用户订单统计
+ * GET /api/orders/stats
+ */
+router.get('/stats', authenticateToken, (req, res) => {
+  const stats = db.prepare(`
+    SELECT
+      COUNT(*) as total_orders,
+      SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) as paid_orders,
+      SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_orders,
+      SUM(CASE WHEN status = 'paid' THEN price ELSE 0 END) as total_spent
+    FROM orders
+    WHERE user_id = ?
+  `).get(req.user.id);
+
+  return ApiResponse.success(res, stats);
+});
+
+/**
  * 获取订单详情
  * GET /api/orders/:id
  */

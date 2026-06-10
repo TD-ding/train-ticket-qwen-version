@@ -103,4 +103,77 @@ router.get('/me', authenticateToken, (req, res) => {
   return ApiResponse.success(res, user);
 });
 
+/**
+ * 更新用户信息
+ * PUT /api/auth/profile
+ */
+router.put('/profile', authenticateToken, (req, res) => {
+  const { realName, phone, email } = req.body;
+
+  if (phone && !Validator.isValidPhone(phone)) {
+    return ApiResponse.error(res, '手机号格式错误', 400);
+  }
+
+  if (email && !Validator.isValidEmail(email)) {
+    return ApiResponse.error(res, '邮箱格式错误', 400);
+  }
+
+  const updates = [];
+  const values = [];
+
+  if (realName !== undefined) {
+    updates.push('real_name = ?');
+    values.push(realName);
+  }
+  if (phone !== undefined) {
+    updates.push('phone = ?');
+    values.push(phone);
+  }
+  if (email !== undefined) {
+    updates.push('email = ?');
+    values.push(email);
+  }
+
+  if (updates.length === 0) {
+    return ApiResponse.error(res, '没有需要更新的字段', 400);
+  }
+
+  updates.push('updated_at = CURRENT_TIMESTAMP');
+  values.push(req.user.id);
+
+  db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+
+  return ApiResponse.success(res, null, '信息更新成功');
+});
+
+/**
+ * 修改密码
+ * PUT /api/auth/password
+ */
+router.put('/password', authenticateToken, (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  if (!oldPassword || !newPassword) {
+    return ApiResponse.error(res, '请填写旧密码和新密码', 400);
+  }
+
+  if (!Validator.isValidPassword(newPassword)) {
+    return ApiResponse.error(res, '新密码长度至少6位', 400);
+  }
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  if (!user) {
+    return ApiResponse.notFound(res, '用户不存在');
+  }
+
+  if (!bcrypt.compareSync(oldPassword, user.password)) {
+    return ApiResponse.error(res, '旧密码错误', 400);
+  }
+
+  const hashedPassword = bcrypt.hashSync(newPassword, 10);
+  db.prepare('UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(hashedPassword, req.user.id);
+
+  return ApiResponse.success(res, null, '密码修改成功');
+});
+
 module.exports = router;

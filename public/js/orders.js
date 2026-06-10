@@ -27,9 +27,42 @@ const Orders = {
       this.allOrders = orders;
       App.hideLoading();
       this.renderOrders(orders);
+      this.loadStats();
     } catch (e) {
       App.hideLoading();
       App.showToast(e.message, 'error');
+    }
+  },
+
+  /**
+   * 加载订单统计信息
+   */
+  async loadStats() {
+    try {
+      const stats = await API.orders.getStats();
+      const container = document.getElementById('order-stats');
+      container.innerHTML = `
+        <div class="stats-card">
+          <div class="stat-item">
+            <span class="stat-value">${stats.total_orders || 0}</span>
+            <span class="stat-label">总订单</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">${stats.paid_orders || 0}</span>
+            <span class="stat-label">已支付</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">${stats.cancelled_orders || 0}</span>
+            <span class="stat-label">已取消</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">¥${(stats.total_spent || 0).toFixed(2)}</span>
+            <span class="stat-label">总消费</span>
+          </div>
+        </div>
+      `;
+    } catch (e) {
+      // 静默失败
     }
   },
 
