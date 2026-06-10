@@ -1,0 +1,22 @@
+# 火车票订购系统 - Docker Compose 配置
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: train-ticket-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - HOST_PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/trains/popular', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

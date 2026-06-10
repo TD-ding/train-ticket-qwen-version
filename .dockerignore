@@ -1,7 +1,60 @@
+# Dependencies
 node_modules
-.git
-.github
-*.md
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Environment files
 .env
-data/
+.env.local
+.env.production
+*.env
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
 .DS_Store
+
+# Testing
+coverage
+.nyc_output
+*.test.js
+*.spec.js
+__tests__
+tests
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+docs
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Build artifacts
+dist
+build
+*.log
+
+# Data directory (mounted at runtime)
+data
+*.db
+*.sqlite
