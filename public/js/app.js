@@ -36,11 +36,14 @@ const App = {
       const username = document.getElementById('login-username').value;
       const password = document.getElementById('login-password').value;
       try {
+        App.showLoading('登录中...');
         await Auth.login(username, password);
+        App.hideLoading();
         this.showToast('登录成功！', 'success');
         this.updateNav();
         this.showPage('search');
       } catch (err) {
+        App.hideLoading();
         this.showToast(err.message, 'error');
       }
     });
@@ -48,17 +51,30 @@ const App = {
     // 注册表单
     document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const password = document.getElementById('reg-password').value;
+      const passwordConfirm = document.getElementById('reg-password-confirm').value;
+      if (password !== passwordConfirm) {
+        this.showToast('两次输入的密码不一致', 'error');
+        return;
+      }
+      if (password.length < 6) {
+        this.showToast('密码长度至少6位', 'error');
+        return;
+      }
       try {
+        App.showLoading('注册中...');
         await Auth.register({
           username: document.getElementById('reg-username').value,
-          password: document.getElementById('reg-password').value,
+          password: password,
           realName: document.getElementById('reg-realname').value,
           phone: document.getElementById('reg-phone').value,
           email: document.getElementById('reg-email').value
         });
+        App.hideLoading();
         this.showToast('注册成功，请登录', 'success');
         this.showPage('login');
       } catch (err) {
+        App.hideLoading();
         this.showToast(err.message, 'error');
       }
     });
@@ -67,17 +83,22 @@ const App = {
     document.getElementById('booking-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
+        App.showLoading('购票中...');
         await API.orders.create({
           trainId: this.selectedTrainId,
           seatType: document.getElementById('booking-seat-type').value,
           passengerName: document.getElementById('booking-passenger').value,
           passengerId: document.getElementById('booking-id-number').value
         });
+        App.hideLoading();
         this.showToast('购票成功！', 'success');
         this.closeModal('booking-modal');
+        // 刷新搜索结果以更新余票数
+        Search.refreshLastSearch();
         this.showPage('orders');
         Orders.loadOrders();
       } catch (err) {
+        App.hideLoading();
         this.showToast(err.message, 'error');
       }
     });
@@ -215,7 +236,6 @@ const App = {
       return;
     }
     this.selectedTrainId = trainId;
-    document.getElementById('booking-train-no').textContent = trainNo;
     document.getElementById('booking-form').reset();
     document.getElementById('booking-train-no').textContent = trainNo;
     document.getElementById('booking-modal').classList.remove('hidden');
@@ -247,6 +267,24 @@ const App = {
     toast.className = `toast ${type}`;
     toast.classList.remove('hidden');
     setTimeout(() => toast.classList.add('hidden'), 3000);
+  },
+
+  /**
+   * 显示加载状态
+   */
+  showLoading(message = '加载中...') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast info';
+    toast.classList.remove('hidden');
+  },
+
+  /**
+   * 隐藏加载状态
+   */
+  hideLoading() {
+    const toast = document.getElementById('toast');
+    toast.classList.add('hidden');
   }
 };
 

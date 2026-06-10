@@ -4,6 +4,7 @@
  */
 const Search = {
   stations: [],
+  lastSearch: null,
 
   /**
    * 初始化：加载车站列表，设置默认日期
@@ -35,18 +36,28 @@ const Search = {
    * 执行搜索
    */
   async search(from, to, date) {
+    this.lastSearch = { from, to, date };
     try {
+      App.showLoading('查询中...');
       const trains = await API.trains.search({ from, to, date });
-      this.renderResults(trains);
+      App.hideLoading();
+      this.renderResults(trains, date);
     } catch (e) {
+      App.hideLoading();
       App.showToast(e.message, 'error');
+    }
+  },
+
+  refreshLastSearch() {
+    if (this.lastSearch) {
+      this.search(this.lastSearch.from, this.lastSearch.to, this.lastSearch.date);
     }
   },
 
   /**
    * 渲染搜索结果
    */
-  renderResults(trains) {
+  renderResults(trains, date) {
     const container = document.getElementById('search-results');
 
     if (trains.length === 0) {
@@ -81,7 +92,10 @@ const Search = {
       return `
         <div class="train-card">
           <div class="train-info">
-            <div class="train-no">${train.train_no}</div>
+            <div>
+              <div class="train-no">${train.train_no}</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">${date}</div>
+            </div>
             <div class="train-stations">
               <div class="station-time">
                 <div class="time">${train.departure_time}</div>

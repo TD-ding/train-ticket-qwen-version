@@ -3,6 +3,8 @@
  * 处理管理面板的数据展示和操作
  */
 const Admin = {
+  pageSize: 10,
+  currentPage: 1,
   statusLabels: {
     pending: '待支付',
     paid: '已支付',
@@ -42,9 +44,14 @@ const Admin = {
   /**
    * 加载列车管理表格
    */
-  async loadTrains() {
+  async loadTrains(page = 1) {
     try {
+      this.currentPage = page;
       const trains = await API.admin.getTrains();
+      const totalPages = Math.ceil(trains.length / this.pageSize);
+      const start = (page - 1) * this.pageSize;
+      const pageTrains = trains.slice(start, start + this.pageSize);
+
       const container = document.getElementById('admin-trains-table');
       container.innerHTML = `
         <table class="data-table">
@@ -56,7 +63,7 @@ const Admin = {
             </tr>
           </thead>
           <tbody>
-            ${trains.map(t => `
+            ${pageTrains.map(t => `
               <tr>
                 <td>${t.train_no}</td><td>${t.date}</td>
                 <td>${t.departure_station}</td><td>${t.arrival_station}</td>
@@ -74,6 +81,7 @@ const Admin = {
             `).join('')}
           </tbody>
         </table>
+        ${this.renderPagination(page, totalPages, 'loadTrains')}
       `;
     } catch (e) {
       App.showToast(e.message, 'error');
@@ -110,9 +118,14 @@ const Admin = {
   /**
    * 加载所有订单
    */
-  async loadOrders() {
+  async loadOrders(page = 1) {
     try {
+      this.currentPage = page;
       const orders = await API.admin.getOrders();
+      const totalPages = Math.ceil(orders.length / this.pageSize);
+      const start = (page - 1) * this.pageSize;
+      const pageOrders = orders.slice(start, start + this.pageSize);
+
       const container = document.getElementById('admin-orders-table');
       container.innerHTML = `
         <table class="data-table">
@@ -123,7 +136,7 @@ const Admin = {
             </tr>
           </thead>
           <tbody>
-            ${orders.map(o => `
+            ${pageOrders.map(o => `
               <tr>
                 <td>${o.order_no}</td>
                 <td>${o.username}</td>
@@ -138,6 +151,7 @@ const Admin = {
             `).join('')}
           </tbody>
         </table>
+        ${this.renderPagination(page, totalPages, 'loadOrders')}
       `;
     } catch (e) {
       App.showToast(e.message, 'error');
@@ -147,9 +161,14 @@ const Admin = {
   /**
    * 加载用户列表
    */
-  async loadUsers() {
+  async loadUsers(page = 1) {
     try {
+      this.currentPage = page;
       const users = await API.admin.getUsers();
+      const totalPages = Math.ceil(users.length / this.pageSize);
+      const start = (page - 1) * this.pageSize;
+      const pageUsers = users.slice(start, start + this.pageSize);
+
       const container = document.getElementById('admin-users-table');
       container.innerHTML = `
         <table class="data-table">
@@ -160,7 +179,7 @@ const Admin = {
             </tr>
           </thead>
           <tbody>
-            ${users.map(u => `
+            ${pageUsers.map(u => `
               <tr>
                 <td>${u.id}</td>
                 <td>${u.username}</td>
@@ -173,9 +192,24 @@ const Admin = {
             `).join('')}
           </tbody>
         </table>
+        ${this.renderPagination(page, totalPages, 'loadUsers')}
       `;
     } catch (e) {
       App.showToast(e.message, 'error');
     }
+  },
+
+  renderPagination(currentPage, totalPages, loadFunc) {
+    if (totalPages <= 1) return '';
+    let html = '<div style="margin-top: 16px; display: flex; gap: 8px; justify-content: center;">';
+    if (currentPage > 1) {
+      html += `<button class="btn btn-secondary" onclick="Admin.${loadFunc}(${currentPage - 1})">上一页</button>`;
+    }
+    html += `<span style="padding: 10px; color: var(--text-secondary);">第 ${currentPage} / ${totalPages} 页</span>`;
+    if (currentPage < totalPages) {
+      html += `<button class="btn btn-secondary" onclick="Admin.${loadFunc}(${currentPage + 1})">下一页</button>`;
+    }
+    html += '</div>';
+    return html;
   }
 };
