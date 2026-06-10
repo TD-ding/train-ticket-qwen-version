@@ -40,6 +40,25 @@ router.get('/search', (req, res) => {
 });
 
 /**
+ * 获取热门路线
+ * GET /api/trains/popular
+ */
+router.get('/popular', (req, res) => {
+  const popular = db.prepare(`
+    SELECT
+      departure_station,
+      arrival_station,
+      COUNT(*) as search_count
+    FROM trains
+    WHERE date >= date('now', '-7 days')
+    GROUP BY departure_station, arrival_station
+    ORDER BY search_count DESC
+    LIMIT 5
+  `).all();
+  return ApiResponse.success(res, popular);
+});
+
+/**
  * 获取列车详情
  * GET /api/trains/:id
  */

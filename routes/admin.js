@@ -148,4 +148,46 @@ router.get('/stats', (req, res) => {
   });
 });
 
+/**
+ * 获取收入统计（按日期）
+ * GET /api/admin/stats/revenue
+ */
+router.get('/stats/revenue', (req, res) => {
+  const { days = 30 } = req.query;
+  const revenue = db.prepare(`
+    SELECT
+      DATE(paid_at) as date,
+      COUNT(*) as order_count,
+      SUM(price) as revenue
+    FROM orders
+    WHERE status = 'paid' AND paid_at >= date('now', '-${parseInt(days)} days')
+    GROUP BY DATE(paid_at)
+    ORDER BY date DESC
+  `).all();
+
+  return ApiResponse.success(res, revenue);
+});
+
+/**
+ * 批量更新列车状态
+ * PUT /api/admin/trains/batch/status
+ */
+router.put('/trains/batch/status', (req, res) => {
+  const { trainIds, status } = req.body;
+
+  if (!Array.isArray(trainIds) || trainIds.length === 0) {
+    return ApiResponse.error(res, '请提供列车ID列表', 400);
+  }
+
+  const validStatuses = ['active', 'cancelled', 'completed'];
+  if (!validStatuses.includes(status)) {
+    return ApiResponse.error(res, '无效的状态值', 400);
+  }
+
+  const placeholders = trainIds.map(() => '?').join(',');
+  const result = db.prepare(`UPDATE trains SET status = ? WHERE id IN (${placeholders})`).run(status, ...trainIds);
+
+  return ApiResponse.success(res, { updated: result.changes }, '批量更新成功');
+});
+
 module.exports = router;

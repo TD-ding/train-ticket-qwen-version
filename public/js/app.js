@@ -191,6 +191,55 @@ const App = {
         overlay.closest('.modal').classList.add('hidden');
       });
     });
+
+    // 个人资料表单
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!this.validateProfilePhone() || !this.validateProfileEmail()) {
+        this.showToast('请修正表单中的错误', 'error');
+        return;
+      }
+      try {
+        App.showLoading('保存中...');
+        await API.auth.updateProfile({
+          realName: document.getElementById('profile-realname').value,
+          phone: document.getElementById('profile-phone').value,
+          email: document.getElementById('profile-email').value
+        });
+        App.hideLoading();
+        this.showToast('信息更新成功', 'success');
+        await Auth.init();
+        this.updateNav();
+      } catch (err) {
+        App.hideLoading();
+        this.showToast(err.message, 'error');
+      }
+    });
+
+    // 修改密码表单
+    document.getElementById('password-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!this.validateNewPassword() || !this.validateNewPasswordConfirm()) {
+        this.showToast('请修正表单中的错误', 'error');
+        return;
+      }
+      try {
+        App.showLoading('修改中...');
+        await API.auth.changePassword({
+          oldPassword: document.getElementById('password-old').value,
+          newPassword: document.getElementById('password-new').value
+        });
+        App.hideLoading();
+        this.showToast('密码修改成功，请重新登录', 'success');
+        document.getElementById('password-form').reset();
+        Auth.logout();
+        this.updateNav();
+        this.showPage('login');
+      } catch (err) {
+        App.hideLoading();
+        this.showToast(err.message, 'error');
+      }
+    });
   },
 
   /**
@@ -202,6 +251,7 @@ const App = {
 
     if (Auth.isLoggedIn()) {
       html += `<a href="#" onclick="App.showPage('orders'); return false;">我的订单</a>`;
+      html += `<a href="#" onclick="App.showPage('profile'); return false;">个人中心</a>`;
       if (Auth.isAdmin()) {
         html += `<a href="#" onclick="App.showPage('admin'); return false;">管理后台</a>`;
       }
@@ -219,7 +269,7 @@ const App = {
    */
   showPage(page) {
     // 需要登录的页面
-    if ((page === 'orders' || page === 'admin') && !Auth.isLoggedIn()) {
+    if ((page === 'orders' || page === 'admin' || page === 'profile') && !Auth.isLoggedIn()) {
       this.showPage('login');
       this.showToast('请先登录', 'warning');
       return;
@@ -240,6 +290,7 @@ const App = {
     // 加载页面数据
     if (page === 'orders') Orders.loadOrders();
     if (page === 'admin') Admin.loadDashboard();
+    if (page === 'profile') this.loadProfile();
   },
 
   /**
@@ -410,6 +461,59 @@ const App = {
       return false;
     }
     return true;
+  },
+
+  validateProfilePhone() {
+    const phone = document.getElementById('profile-phone').value.trim();
+    this.clearFieldError('profile-phone');
+    if (phone && !/^1[3-9]\d{9}$/.test(phone)) {
+      this.showFieldError('profile-phone', '请输入正确的手机号');
+      return false;
+    }
+    return true;
+  },
+
+  validateProfileEmail() {
+    const email = document.getElementById('profile-email').value.trim();
+    this.clearFieldError('profile-email');
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.showFieldError('profile-email', '请输入正确的邮箱地址');
+      return false;
+    }
+    return true;
+  },
+
+  validateNewPassword() {
+    const password = document.getElementById('password-new').value;
+    this.clearFieldError('password-new');
+    if (password.length < 6) {
+      this.showFieldError('password-new', '密码至少6个字符');
+      return false;
+    }
+    return true;
+  },
+
+  validateNewPasswordConfirm() {
+    const password = document.getElementById('password-new').value;
+    const confirm = document.getElementById('password-confirm').value;
+    this.clearFieldError('password-confirm');
+    if (password !== confirm) {
+      this.showFieldError('password-confirm', '两次输入的密码不一致');
+      return false;
+    }
+    return true;
+  },
+
+  async loadProfile() {
+    try {
+      const user = await API.auth.me();
+      document.getElementById('profile-username').value = user.username || '';
+      document.getElementById('profile-realname').value = user.real_name || '';
+      document.getElementById('profile-phone').value = user.phone || '';
+      document.getElementById('profile-email').value = user.email || '';
+    } catch (e) {
+      this.showToast(e.message, 'error');
+    }
   }
 };
 

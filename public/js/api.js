@@ -50,7 +50,9 @@ const API = {
   auth: {
     register(data) { return API.request('POST', '/api/auth/register', data, false); },
     login(data) { return API.request('POST', '/api/auth/login', data, false); },
-    me() { return API.request('GET', '/api/auth/me'); }
+    me() { return API.request('GET', '/api/auth/me'); },
+    updateProfile(data) { return API.request('PUT', '/api/auth/profile', data); },
+    changePassword(data) { return API.request('PUT', '/api/auth/password', data); }
   },
 
   // 列车相关
@@ -60,7 +62,8 @@ const API = {
       return API.request('GET', `/api/trains/search?${query}`, null, false);
     },
     getById(id) { return API.request('GET', `/api/trains/${id}`, null, false); },
-    getStations() { return API.request('GET', '/api/trains/meta/stations', null, false); }
+    getStations() { return API.request('GET', '/api/trains/meta/stations', null, false); },
+    getPopular() { return API.request('GET', '/api/trains/popular', null, false); }
   },
 
   // 订单相关
@@ -69,15 +72,20 @@ const API = {
     list() { return API.request('GET', '/api/orders'); },
     getById(id) { return API.request('GET', `/api/orders/${id}`); },
     pay(id) { return API.request('POST', `/api/orders/${id}/pay`); },
-    cancel(id) { return API.request('POST', `/api/orders/${id}/cancel`); }
+    cancel(id) { return API.request('POST', `/api/orders/${id}/cancel`); },
+    getStats() { return API.request('GET', '/api/orders/stats'); }
   },
 
   // 管理员相关
   admin: {
     getStats() { return API.request('GET', '/api/admin/stats'); },
+    getRevenueStats(days) { return API.request('GET', `/api/admin/stats/revenue?days=${days}`); },
     getTrains() { return API.request('GET', '/api/admin/trains'); },
     addTrain(data) { return API.request('POST', '/api/admin/trains', data); },
     updateTrain(id, data) { return API.request('PUT', `/api/admin/trains/${id}`, data); },
+    batchUpdateTrainStatus(trainIds, status) {
+      return API.request('PUT', '/api/admin/trains/batch/status', { trainIds, status });
+    },
     getOrders() { return API.request('GET', '/api/admin/orders'); },
     getUsers() { return API.request('GET', '/api/admin/users'); }
   }
