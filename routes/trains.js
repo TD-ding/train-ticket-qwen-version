@@ -5,6 +5,8 @@
 const express = require('express');
 const db = require('../db/database');
 const { authenticateToken } = require('../middleware/auth');
+const ApiResponse = require('../utils/response');
+const Validator = require('../utils/validator');
 
 const router = express.Router();
 
@@ -16,7 +18,11 @@ router.get('/search', (req, res) => {
   const { from, to, date } = req.query;
 
   if (!from || !to) {
-    return res.status(400).json({ error: '出发站和到达站不能为空' });
+    return ApiResponse.error(res, '出发站和到达站不能为空', 400);
+  }
+
+  if (date && !Validator.isValidDate(date)) {
+    return ApiResponse.error(res, '日期格式错误', 400);
   }
 
   let sql = 'SELECT * FROM trains WHERE departure_station = ? AND arrival_station = ? AND status = ?';
@@ -30,7 +36,7 @@ router.get('/search', (req, res) => {
   sql += ' ORDER BY departure_time ASC';
 
   const trains = db.prepare(sql).all(...params);
-  res.json(trains);
+  return ApiResponse.success(res, trains);
 });
 
 /**
@@ -40,9 +46,9 @@ router.get('/search', (req, res) => {
 router.get('/:id', (req, res) => {
   const train = db.prepare('SELECT * FROM trains WHERE id = ?').get(req.params.id);
   if (!train) {
-    return res.status(404).json({ error: '列车不存在' });
+    return ApiResponse.notFound(res, '列车不存在');
   }
-  res.json(train);
+  return ApiResponse.success(res, train);
 });
 
 /**
@@ -56,7 +62,7 @@ router.get('/meta/stations', (req, res) => {
     SELECT DISTINCT arrival_station as station FROM trains
     ORDER BY station
   `).all();
-  res.json(stations.map(s => s.station));
+  return ApiResponse.success(res, stations.map(s => s.station));
 });
 
 module.exports = router;

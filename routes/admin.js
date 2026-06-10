@@ -5,6 +5,8 @@
 const express = require('express');
 const db = require('../db/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const ApiResponse = require('../utils/response');
+const Validator = require('../utils/validator');
 
 const router = express.Router();
 
@@ -17,7 +19,7 @@ router.use(requireAdmin);
  */
 router.get('/trains', (req, res) => {
   const trains = db.prepare('SELECT * FROM trains ORDER BY date DESC, departure_time ASC').all();
-  res.json(trains);
+  return ApiResponse.success(res, trains);
 });
 
 /**
@@ -31,12 +33,40 @@ router.post('/trains', (req, res) => {
   } = req.body;
 
   if (!trainNo || !departureStation || !arrivalStation || !date) {
-    return res.status(400).json({ error: '缺少必要参数' });
+    return ApiResponse.error(res, '缺少必要参数', 400);
+  }
+
+  if (!Validator.isValidDate(date)) {
+    return ApiResponse.error(res, '日期格式错误', 400);
+  }
+
+  if (departureTime && !Validator.isValidTime(departureTime)) {
+    return ApiResponse.error(res, '出发时间格式错误', 400);
+  }
+
+  if (arrivalTime && !Validator.isValidTime(arrivalTime)) {
+    return ApiResponse.error(res, '到达时间格式错误', 400);
+  }
+
+  if (priceHardSeat && !Validator.isNonNegativeNumber(priceHardSeat)) {
+    return ApiResponse.error(res, '硬座价格必须为非负数', 400);
+  }
+
+  if (priceHardSleeper && !Validator.isNonNegativeNumber(priceHardSleeper)) {
+    return ApiResponse.error(res, '硬卧价格必须为非负数', 400);
+  }
+
+  if (priceSoftSleeper && !Validator.isNonNegativeNumber(priceSoftSleeper)) {
+    return ApiResponse.error(res, '软卧价格必须为非负数', 400);
+  }
+
+  if (totalSeats && !Validator.isPositiveInteger(totalSeats)) {
+    return ApiResponse.error(res, '总座位数必须为正整数', 400);
   }
 
   const existing = db.prepare('SELECT id FROM trains WHERE train_no = ? AND date = ?').get(trainNo, date);
   if (existing) {
-    return res.status(400).json({ error: '该日期已存在相同车次' });
+    return ApiResponse.error(res, '该日期已存在相同车次', 400);
   }
 
   const result = db.prepare(`
@@ -49,7 +79,7 @@ router.post('/trains', (req, res) => {
     totalSeats || 100, totalSeats || 100, date
   );
 
-  res.json({ message: '列车添加成功', trainId: result.lastInsertRowid });
+  return ApiResponse.created(res, { trainId: result.lastInsertRowid }, '列车添加成功');
 });
 
 /**
@@ -61,14 +91,19 @@ router.put('/trains/:id', (req, res) => {
   const train = db.prepare('SELECT * FROM trains WHERE id = ?').get(req.params.id);
 
   if (!train) {
-    return res.status(404).json({ error: '列车不存在' });
+    return ApiResponse.notFound(res, '列车不存在');
+  }
+
+  const validStatuses = ['active', 'cancelled', 'completed'];
+  if (status && !validStatuses.includes(status)) {
+    return ApiResponse.error(res, '无效的状态值', 400);
   }
 
   if (status) {
     db.prepare('UPDATE trains SET status = ? WHERE id = ?').run(status, train.id);
   }
 
-  res.json({ message: '列车更新成功' });
+  return ApiResponse.success(res, null, '列车更新成功');
 });
 
 /**
@@ -83,7 +118,7 @@ router.get('/orders', (req, res) => {
     JOIN users u ON o.user_id = u.id
     ORDER BY o.created_at DESC
   `).all();
-  res.json(orders);
+  return ApiResponse.success(res, orders);
 });
 
 /**
@@ -92,7 +127,7 @@ router.get('/orders', (req, res) => {
  */
 router.get('/users', (req, res) => {
   const users = db.prepare('SELECT id, username, real_name, phone, email, role, created_at FROM users ORDER BY created_at DESC').all();
-  res.json(users);
+  return ApiResponse.success(res, users);
 });
 
 /**
@@ -105,7 +140,7 @@ router.get('/stats', (req, res) => {
   const totalRevenue = db.prepare("SELECT COALESCE(SUM(price), 0) as total FROM orders WHERE status = 'paid'").get();
   const totalTrains = db.prepare('SELECT COUNT(*) as count FROM trains').get();
 
-  res.json({
+  return ApiResponse.success(res, {
     totalUsers: totalUsers.count,
     totalOrders: totalOrders.count,
     totalRevenue: totalRevenue.total,

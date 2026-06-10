@@ -21,9 +21,12 @@ const Orders = {
    */
   async loadOrders() {
     try {
+      App.showLoading('加载订单中...');
       const orders = await API.orders.list();
+      App.hideLoading();
       this.renderOrders(orders);
     } catch (e) {
+      App.hideLoading();
       App.showToast(e.message, 'error');
     }
   },
@@ -70,10 +73,13 @@ const Orders = {
    */
   async payOrder(id) {
     try {
+      App.showLoading('支付中...');
       await API.orders.pay(id);
+      App.hideLoading();
       App.showToast('支付成功！', 'success');
       this.loadOrders();
     } catch (e) {
+      App.hideLoading();
       App.showToast(e.message, 'error');
     }
   },
@@ -84,10 +90,13 @@ const Orders = {
   async cancelOrder(id) {
     if (!confirm('确定要取消此订单吗？')) return;
     try {
+      App.showLoading('取消中...');
       await API.orders.cancel(id);
+      App.hideLoading();
       App.showToast('订单已取消', 'info');
       this.loadOrders();
     } catch (e) {
+      App.hideLoading();
       App.showToast(e.message, 'error');
     }
   }

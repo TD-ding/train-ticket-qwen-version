@@ -1,6 +1,6 @@
 /**
  * API 封装模块
- * 封装所有与后端的 HTTP 请求
+ * 封装所有与后端的 HTTP 请求，统一处理新的响应格式
  */
 const API = {
   baseUrl: '',
@@ -24,13 +24,26 @@ const API = {
     }
 
     const response = await fetch(this.baseUrl + url, options);
-    const result = await response.json();
 
-    if (!response.ok) {
-      throw new Error(result.error || '请求失败');
+    // 处理非JSON响应
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('服务器返回非JSON响应');
     }
 
-    return result;
+    const result = await response.json();
+
+    // 统一处理新的API响应格式
+    if (!response.ok) {
+      throw new Error(result.message || result.error || '请求失败');
+    }
+
+    // 检查API响应码
+    if (result.code !== 0) {
+      throw new Error(result.message || '请求失败');
+    }
+
+    return result.data;
   },
 
   // 认证相关

@@ -6,6 +6,8 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db/database');
 const { authenticateToken } = require('../middleware/auth');
+const ApiResponse = require('../utils/response');
+const Validator = require('../utils/validator');
 
 const router = express.Router();
 
@@ -17,36 +19,52 @@ router.post('/', authenticateToken, (req, res) => {
   const { trainId, seatType, passengerName, passengerId } = req.body;
 
   if (!trainId || !seatType || !passengerName) {
-    return res.status(400).json({ error: '缺少必要参数' });
+    return ApiResponse.error(res, '缺少必要参数', 400);
   }
 
-  const train = db.prepare('SELECT * FROM trains WHERE id = ? AND status = ?').get(trainId, 'active');
-  if (!train) {
-    return res.status(404).json({ error: '列车不存在或已取消' });
+  if (passengerId && !Validator.isValidIdCard(passengerId)) {
+    return ApiResponse.error(res, '身份证号格式错误', 400);
   }
 
-  if (train.available_seats <= 0) {
-    return res.status(400).json({ error: '该列车已无余票' });
+  const validSeatTypes = ['hard_seat', 'hard_sleeper', 'soft_sleeper'];
+  if (!validSeatTypes.includes(seatType)) {
+    return ApiResponse.error(res, '无效的座位类型', 400);
   }
 
-  let price = 0;
-  if (seatType === 'hard_seat') price = train.price_hard_seat;
-  else if (seatType === 'hard_sleeper') price = train.price_hard_sleeper;
-  else if (seatType === 'soft_sleeper') price = train.price_soft_sleeper;
-  else {
-    return res.status(400).json({ error: '无效的座位类型' });
+  // 使用事务保证数据一致性
+  const createOrder = db.transaction(() => {
+    const train = db.prepare('SELECT * FROM trains WHERE id = ? AND status = ?').get(trainId, 'active');
+    if (!train) {
+      throw new Error('列车不存在或已取消');
+    }
+
+    if (train.available_seats <= 0) {
+      throw new Error('该列车已无余票');
+    }
+
+    let price = 0;
+    if (seatType === 'hard_seat') price = train.price_hard_seat;
+    else if (seatType === 'hard_sleeper') price = train.price_hard_sleeper;
+    else if (seatType === 'soft_sleeper') price = train.price_soft_sleeper;
+
+    const orderNo = uuidv4().replace(/-/g, '').substring(0, 16).toUpperCase();
+
+    const result = db.prepare(`
+      INSERT INTO orders (order_no, user_id, train_id, seat_type, passenger_name, passenger_id, price)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(orderNo, req.user.id, trainId, seatType, passengerName, passengerId || '', price);
+
+    db.prepare('UPDATE trains SET available_seats = available_seats - 1 WHERE id = ?').run(trainId);
+
+    return { orderId: result.lastInsertRowid, orderNo, price };
+  });
+
+  try {
+    const orderData = createOrder();
+    return ApiResponse.created(res, orderData, '订单创建成功');
+  } catch (err) {
+    return ApiResponse.error(res, err.message, 400);
   }
-
-  const orderNo = uuidv4().replace(/-/g, '').substring(0, 16).toUpperCase();
-
-  const result = db.prepare(`
-    INSERT INTO orders (order_no, user_id, train_id, seat_type, passenger_name, passenger_id, price)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(orderNo, req.user.id, trainId, seatType, passengerName, passengerId || '', price);
-
-  db.prepare('UPDATE trains SET available_seats = available_seats - 1 WHERE id = ?').run(trainId);
-
-  res.json({ message: '订单创建成功', orderId: result.lastInsertRowid, orderNo, price });
 });
 
 /**
@@ -61,7 +79,7 @@ router.get('/', authenticateToken, (req, res) => {
     WHERE o.user_id = ?
     ORDER BY o.created_at DESC
   `).all(req.user.id);
-  res.json(orders);
+  return ApiResponse.success(res, orders);
 });
 
 /**
@@ -77,9 +95,9 @@ router.get('/:id', authenticateToken, (req, res) => {
   `).get(req.params.id, req.user.id);
 
   if (!order) {
-    return res.status(404).json({ error: '订单不存在' });
+    return ApiResponse.notFound(res, '订单不存在');
   }
-  res.json(order);
+  return ApiResponse.success(res, order);
 });
 
 /**
@@ -90,18 +108,18 @@ router.post('/:id/pay', authenticateToken, (req, res) => {
   const order = db.prepare('SELECT * FROM orders WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
 
   if (!order) {
-    return res.status(404).json({ error: '订单不存在' });
+    return ApiResponse.notFound(res, '订单不存在');
   }
 
   if (order.status !== 'pending') {
-    return res.status(400).json({ error: '订单状态不允许支付' });
+    return ApiResponse.error(res, '订单状态不允许支付', 400);
   }
 
   db.prepare(`
     UPDATE orders SET status = 'paid', paid_at = CURRENT_TIMESTAMP WHERE id = ?
   `).run(order.id);
 
-  res.json({ message: '支付成功' });
+  return ApiResponse.success(res, null, '支付成功');
 });
 
 /**
@@ -112,17 +130,25 @@ router.post('/:id/cancel', authenticateToken, (req, res) => {
   const order = db.prepare('SELECT * FROM orders WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
 
   if (!order) {
-    return res.status(404).json({ error: '订单不存在' });
+    return ApiResponse.notFound(res, '订单不存在');
   }
 
   if (order.status === 'cancelled') {
-    return res.status(400).json({ error: '订单已取消' });
+    return ApiResponse.error(res, '订单已取消', 400);
   }
 
-  db.prepare('UPDATE orders SET status = ? WHERE id = ?').run('cancelled', order.id);
-  db.prepare('UPDATE trains SET available_seats = available_seats + 1 WHERE id = ?').run(order.train_id);
+  // 使用事务保证数据一致性
+  const cancelOrder = db.transaction(() => {
+    db.prepare('UPDATE orders SET status = ? WHERE id = ?').run('cancelled', order.id);
+    db.prepare('UPDATE trains SET available_seats = available_seats + 1 WHERE id = ?').run(order.train_id);
+  });
 
-  res.json({ message: '订单已取消' });
+  try {
+    cancelOrder();
+    return ApiResponse.success(res, null, '订单已取消');
+  } catch (err) {
+    return ApiResponse.serverError(res, '取消订单失败');
+  }
 });
 
 module.exports = router;

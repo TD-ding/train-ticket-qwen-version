@@ -29,7 +29,9 @@ const Admin = {
    */
   async loadDashboard() {
     try {
+      App.showLoading('加载统计数据...');
       const stats = await API.admin.getStats();
+      App.hideLoading();
       document.getElementById('stats-grid').innerHTML = `
         <div class="stat-card"><div class="value">${stats.totalUsers}</div><div class="label">注册用户</div></div>
         <div class="stat-card"><div class="value">${stats.totalOrders}</div><div class="label">总订单数</div></div>
@@ -37,6 +39,7 @@ const Admin = {
         <div class="stat-card"><div class="value">${stats.totalTrains}</div><div class="label">列车数量</div></div>
       `;
     } catch (e) {
+      App.hideLoading();
       App.showToast(e.message, 'error');
     }
   },
@@ -47,7 +50,9 @@ const Admin = {
   async loadTrains(page = 1) {
     try {
       this.currentPage = page;
+      App.showLoading('加载列车数据...');
       const trains = await API.admin.getTrains();
+      App.hideLoading();
       const totalPages = Math.ceil(trains.length / this.pageSize);
       const start = (page - 1) * this.pageSize;
       const pageTrains = trains.slice(start, start + this.pageSize);
@@ -84,6 +89,7 @@ const Admin = {
         ${this.renderPagination(page, totalPages, 'loadTrains')}
       `;
     } catch (e) {
+      App.hideLoading();
       App.showToast(e.message, 'error');
     }
   },
@@ -94,10 +100,13 @@ const Admin = {
   async cancelTrain(id) {
     if (!confirm('确定要取消此列车吗？')) return;
     try {
+      App.showLoading('取消列车中...');
       await API.admin.updateTrain(id, { status: 'cancelled' });
+      App.hideLoading();
       App.showToast('列车已取消', 'info');
       this.loadTrains();
     } catch (e) {
+      App.hideLoading();
       App.showToast(e.message, 'error');
     }
   },
@@ -107,10 +116,13 @@ const Admin = {
    */
   async addTrain(data) {
     try {
+      App.showLoading('添加列车中...');
       await API.admin.addTrain(data);
+      App.hideLoading();
       App.showToast('列车添加成功', 'success');
       this.loadTrains();
     } catch (e) {
+      App.hideLoading();
       App.showToast(e.message, 'error');
     }
   },
@@ -121,7 +133,9 @@ const Admin = {
   async loadOrders(page = 1) {
     try {
       this.currentPage = page;
+      App.showLoading('加载订单数据...');
       const orders = await API.admin.getOrders();
+      App.hideLoading();
       const totalPages = Math.ceil(orders.length / this.pageSize);
       const start = (page - 1) * this.pageSize;
       const pageOrders = orders.slice(start, start + this.pageSize);
@@ -154,6 +168,7 @@ const Admin = {
         ${this.renderPagination(page, totalPages, 'loadOrders')}
       `;
     } catch (e) {
+      App.hideLoading();
       App.showToast(e.message, 'error');
     }
   },
@@ -164,7 +179,9 @@ const Admin = {
   async loadUsers(page = 1) {
     try {
       this.currentPage = page;
+      App.showLoading('加载用户数据...');
       const users = await API.admin.getUsers();
+      App.hideLoading();
       const totalPages = Math.ceil(users.length / this.pageSize);
       const start = (page - 1) * this.pageSize;
       const pageUsers = users.slice(start, start + this.pageSize);
@@ -195,6 +212,7 @@ const Admin = {
         ${this.renderPagination(page, totalPages, 'loadUsers')}
       `;
     } catch (e) {
+      App.hideLoading();
       App.showToast(e.message, 'error');
     }
   },
