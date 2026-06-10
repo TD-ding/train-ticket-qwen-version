@@ -151,8 +151,8 @@ router.post('/:id/cancel', authenticateToken, (req, res) => {
     return ApiResponse.notFound(res, '订单不存在');
   }
 
-  if (order.status === 'cancelled') {
-    return ApiResponse.error(res, '订单已取消', 400);
+  if (order.status !== 'pending') {
+    return ApiResponse.error(res, '只能取消待支付的订单', 400);
   }
 
   // 使用事务保证数据一致性

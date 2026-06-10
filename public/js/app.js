@@ -243,6 +243,16 @@ const App = {
   },
 
   /**
+   * HTML 转义工具方法
+   */
+  escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  },
+
+  /**
    * 更新导航栏
    */
   updateNav() {
@@ -255,7 +265,7 @@ const App = {
       if (Auth.isAdmin()) {
         html += `<a href="#" onclick="App.showPage('admin'); return false;">管理后台</a>`;
       }
-      html += `<span style="color: var(--text-secondary); font-size: 14px;">${Auth.currentUser.username}</span>`;
+      html += `<span style="color: var(--text-secondary); font-size: 14px;">${this.escapeHtml(Auth.currentUser.username)}</span>`;
       html += `<button onclick="App.doLogout()">登出</button>`;
     } else {
       html += `<a href="#" onclick="App.showPage('login'); return false;">登录</a>`;

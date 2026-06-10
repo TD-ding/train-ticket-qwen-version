@@ -36,7 +36,7 @@ app.get('*', (req, res) => {
 // 错误处理中间件
 app.use((err, req, res, next) => {
   console.error('服务器错误:', err);
-  res.status(500).json({ error: '服务器内部错误' });
+  res.status(500).json({ code: 1, message: '服务器内部错误', data: null });
 });
 
 // 启动服务器

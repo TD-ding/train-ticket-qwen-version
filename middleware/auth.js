@@ -15,7 +15,7 @@ function authenticateToken(req, res, next) {
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ error: '请先登录' });
+    return res.status(401).json({ code: 1, message: '请先登录', data: null });
   }
 
   try {
@@ -23,7 +23,7 @@ function authenticateToken(req, res, next) {
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(403).json({ error: '登录已过期，请重新登录' });
+    return res.status(403).json({ code: 1, message: '登录已过期，请重新登录', data: null });
   }
 }
 
@@ -32,7 +32,7 @@ function authenticateToken(req, res, next) {
  */
 function requireAdmin(req, res, next) {
   if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ error: '需要管理员权限' });
+    return res.status(403).json({ code: 1, message: '需要管理员权限', data: null });
   }
   next();
 }

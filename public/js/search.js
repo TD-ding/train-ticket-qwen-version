@@ -125,7 +125,7 @@ const Search = {
             <div class="count ${seatsClass}">${train.available_seats}</div>
             <div class="label">余票</div>
           </div>
-          <button class="btn btn-primary" onclick="App.openBooking(${train.id}, '${train.train_no}')">购票</button>
+          <button class="btn btn-primary" onclick="App.openBooking(${train.id}, '${train.train_no.replace(/'/g, "\\'")}')">购票</button>
         </div>
       `;
     }).join('');
